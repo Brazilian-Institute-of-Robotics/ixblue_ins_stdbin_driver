@@ -33,7 +33,7 @@ class ROSPublisher {
   toiXInsMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
 
   static ixblue_ins_msgs::ExternalSensorDataPtr
-  toiXExternalSensorMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData));
+  toiXExternalSensorMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
 
  protected:
   // Header
@@ -53,6 +53,7 @@ class ROSPublisher {
   ros::Publisher stdNavSatFixPublisher;
   ros::Publisher stdTimeReferencePublisher;
   ros::Publisher stdInsPublisher;
+  ros::Publisher stdExternalSensorPublisher;
   DiagnosticsPublisher diagPub;
 
   // Utils

@@ -7,23 +7,22 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
-## Generate messages in the 'msg' folder
 add_message_files(
   DIRECTORY msg
   FILES
   Ins.msg
+  ExternalSensorData.msg
 )
 
-## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
   geometry_msgs
   std_msgs
 )
 
-###################################
-## catkin specific configuration ##
-###################################
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs std_msgs message_runtime
+  CATKIN_DEPENDS
+  geometry_msgs
+  std_msgs
+  message_runtime
 )
