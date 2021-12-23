@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ixblue_ins_msgs/Ins.h>
+#include <ixblue_ins_msgs/ExternalSensorData.h>
 #include <ixblue_stdbin_decoder/data_models/nav_header.h>
 #include <ixblue_stdbin_decoder/data_models/stdbin.h>
 
@@ -12,47 +13,49 @@
 
 #include "diagnostics_publisher.h"
 
-class ROSPublisher
-{
-public:
-    ROSPublisher();
-    void onNewStdBinData(const ixblue_stdbin_decoder::Data::BinaryNav& navData,
-                         const ixblue_stdbin_decoder::Data::NavHeader& headerData);
+class ROSPublisher {
+ public:
+  ROSPublisher();
+  void onNewStdBinData(const ixblue_stdbin_decoder::Data::BinaryNav& navData,
+                        const ixblue_stdbin_decoder::Data::NavHeader& headerData);
 
-    // Standard ros msgs
-    static sensor_msgs::ImuPtr
-    toImuMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData,
-             bool use_compensated_acceleration);
-    static sensor_msgs::NavSatFixPtr
-    toNavSatFixMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
-    static sensor_msgs::TimeReferencePtr
-    toTimeReference(const ixblue_stdbin_decoder::Data::NavHeader& headerData);
+  // Standard ros msgs
+  static sensor_msgs::ImuPtr
+  toImuMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData,
+            bool use_compensated_acceleration);
+  static sensor_msgs::NavSatFixPtr
+  toNavSatFixMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
+  static sensor_msgs::TimeReferencePtr
+  toTimeReference(const ixblue_stdbin_decoder::Data::NavHeader& headerData);
 
-    // iXblue ros msgs
-    static ixblue_ins_msgs::InsPtr
-    toiXInsMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
+  // iXblue ros msgs
+  static ixblue_ins_msgs::InsPtr
+  toiXInsMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
 
-protected:
-    // Header
-    std_msgs::Header getHeader(const ixblue_stdbin_decoder::Data::NavHeader& headerData,
-                               const ixblue_stdbin_decoder::Data::BinaryNav& navData);
+  static ixblue_ins_msgs::ExternalSensorDataPtr
+  toiXExternalSensorMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData));
 
-    // Launch parameters
-    std::string frame_id;
-    std::string time_source;
-    std::string time_origin;
-    bool use_compensated_acceleration;
+ protected:
+  // Header
+  std_msgs::Header getHeader(const ixblue_stdbin_decoder::Data::NavHeader& headerData,
+                             const ixblue_stdbin_decoder::Data::BinaryNav& navData);
 
-    ros::NodeHandle nh;
+  // Launch parameters
+  std::string frame_id;
+  std::string time_source;
+  std::string time_origin;
+  bool use_compensated_acceleration;
 
-    // Publishers
-    ros::Publisher stdImuPublisher;
-    ros::Publisher stdNavSatFixPublisher;
-    ros::Publisher stdTimeReferencePublisher;
-    ros::Publisher stdInsPublisher;
-    DiagnosticsPublisher diagPub;
+  ros::NodeHandle nh;
 
-    // Utils
-    bool useInsAsTimeReference = true;
-    bool useUnixAsTimeOrigin = true;
+  // Publishers
+  ros::Publisher stdImuPublisher;
+  ros::Publisher stdNavSatFixPublisher;
+  ros::Publisher stdTimeReferencePublisher;
+  ros::Publisher stdInsPublisher;
+  DiagnosticsPublisher diagPub;
+
+  // Utils
+  bool useInsAsTimeReference = true;
+  bool useUnixAsTimeOrigin = true;
 };

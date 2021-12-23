@@ -461,3 +461,19 @@ ROSPublisher::toiXInsMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData)
 
     return res;
 }
+
+ixblue_ins_msgs::ExternalSensorDataPtr
+toiXExternalSensorMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData)) {
+  // --- Check if there are enough data to send the message
+  if(navData.soundVelocity.is_initialized() == false) {
+      return nullptr;
+  }
+
+  // --- Initialisation
+  ixblue_ins_msgs::ExternalSensorDataPtr res = boost::make_shared<ixblue_ins_msgs::ExternalSensorData>();
+
+  res->validity_time = navData.SoundVelocity.get().validityTime_100us;
+  res->sound_velocity = navData.SoundVelocity.get().ext_speedofsound_ms;
+
+  return res;
+}
