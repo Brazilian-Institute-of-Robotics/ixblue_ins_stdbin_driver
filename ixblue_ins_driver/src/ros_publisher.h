@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ixblue_ins_msgs/Ins.h>
+#include <ixblue_ins_msgs/SVS.h>
 #include <ixblue_stdbin_decoder/data_models/nav_header.h>
 #include <ixblue_stdbin_decoder/data_models/stdbin.h>
 
@@ -9,6 +10,8 @@
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/NavSatFix.h>
 #include <sensor_msgs/TimeReference.h>
+
+#include <string>
 
 #include "diagnostics_publisher.h"
 
@@ -23,14 +26,19 @@ public:
     static sensor_msgs::ImuPtr
     toImuMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData,
              bool use_compensated_acceleration);
+
     static sensor_msgs::NavSatFixPtr
     toNavSatFixMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
+
     static sensor_msgs::TimeReferencePtr
     toTimeReference(const ixblue_stdbin_decoder::Data::NavHeader& headerData);
 
     // iXblue ros msgs
     static ixblue_ins_msgs::InsPtr
     toiXInsMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
+
+    static ixblue_ins_msgs::SVSPtr
+    toSVSMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
 
 protected:
     // Header
@@ -50,6 +58,7 @@ protected:
     ros::Publisher stdNavSatFixPublisher;
     ros::Publisher stdTimeReferencePublisher;
     ros::Publisher stdInsPublisher;
+    ros::Publisher stdSVSPublisher;
     DiagnosticsPublisher diagPub;
 
     // Utils
