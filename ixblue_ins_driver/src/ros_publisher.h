@@ -2,6 +2,7 @@
 
 #include <ixblue_ins_msgs/Ins.h>
 #include <ixblue_ins_msgs/SVS.h>
+#include <ixblue_ins_msgs/DVL.h>
 #include <ixblue_stdbin_decoder/data_models/nav_header.h>
 #include <ixblue_stdbin_decoder/data_models/stdbin.h>
 
@@ -40,6 +41,9 @@ public:
     static ixblue_ins_msgs::SVSPtr
     toSVSMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
 
+    static ixblue_ins_msgs::DVLPtr
+    toDVLMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
+
 protected:
     // Header
     std_msgs::Header getHeader(const ixblue_stdbin_decoder::Data::NavHeader& headerData,
@@ -59,6 +63,7 @@ protected:
     ros::Publisher stdTimeReferencePublisher;
     ros::Publisher stdInsPublisher;
     ros::Publisher stdSVSPublisher;
+    ros::Publisher stdDVLPublisher;
     DiagnosticsPublisher diagPub;
 
     // Utils
