@@ -12,6 +12,7 @@ add_message_files(
   FILES
   Ins.msg
   SVS.msg
+  DVL.msg
 )
 
 generate_messages(
