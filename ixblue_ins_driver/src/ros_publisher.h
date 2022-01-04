@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ixblue_ins_msgs/Ins.h>
-#include <ixblue_ins_msgs/ExternalSensorData.h>
+#include <ixblue_ins_msgs/SVS.h>
 #include <ixblue_stdbin_decoder/data_models/nav_header.h>
 #include <ixblue_stdbin_decoder/data_models/stdbin.h>
 
@@ -37,8 +37,8 @@ public:
     static ixblue_ins_msgs::InsPtr
     toiXInsMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
 
-    static ixblue_ins_msgs::ExternalSensorDataPtr
-    toiXExternalSensorMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
+    static ixblue_ins_msgs::SVSPtr
+    toSVSMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
 
 protected:
     // Header
@@ -58,7 +58,7 @@ protected:
     ros::Publisher stdNavSatFixPublisher;
     ros::Publisher stdTimeReferencePublisher;
     ros::Publisher stdInsPublisher;
-    ros::Publisher stdExternalSensorPublisher;
+    ros::Publisher stdSVSPublisher;
     DiagnosticsPublisher diagPub;
 
     // Utils

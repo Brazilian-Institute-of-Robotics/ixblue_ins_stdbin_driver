@@ -79,7 +79,7 @@ void ROSPublisher::onNewStdBinData(
     auto imuMsg = toImuMsg(navData, use_compensated_acceleration);
     auto navsatfixMsg = toNavSatFixMsg(navData);
     auto iXinsMsg = toiXInsMsg(navData);
-    auto iXExternalSensorMsg = toiXExternalSensorMsg(navData);
+    auto SVSMsg = toSVSMsg(navData);
 
     if(!useInsAsTimeReference)
     {
@@ -111,9 +111,9 @@ void ROSPublisher::onNewStdBinData(
         stdInsPublisher.publish(iXinsMsg);
     }
 
-    if(iXExternalSensorMsg) {
-      iXExternalSensorMsg->header = headerMsg;
-      stdExternalSensorPublisher.publish(iXExternalSensorMsg);
+    if (SVSMsg) {
+      SVSMsg->header = headerMsg;
+      stdSVSPublisher.publish(SVSMsg);
     }
 
 }
@@ -471,15 +471,15 @@ ROSPublisher::toiXInsMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData)
     return res;
 }
 
-ixblue_ins_msgs::ExternalSensorDataPtr
-ROSPublisher::toiXExternalSensorMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData) {
+ixblue_ins_msgs::SVSPtr
+ROSPublisher::toSVSMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData) {
   // --- Check if there are enough data to send the message
-  if(navData.soundVelocity.is_initialized() == false) {
+  if (navData.soundVelocity.is_initialized() == false) {
       return nullptr;
   }
 
   // --- Initialisation
-  ixblue_ins_msgs::ExternalSensorDataPtr res = boost::make_shared<ixblue_ins_msgs::ExternalSensorData>();
+  ixblue_ins_msgs::SVSPtr res = boost::make_shared<ixblue_ins_msgs::SVS>();
 
   res->validity_time = navData.soundVelocity.get().validityTime_100us;
   res->sound_velocity = navData.soundVelocity.get().ext_speedofsound_ms;

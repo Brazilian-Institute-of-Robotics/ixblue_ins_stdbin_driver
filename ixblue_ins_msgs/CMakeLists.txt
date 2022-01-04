@@ -11,7 +11,7 @@ add_message_files(
   DIRECTORY msg
   FILES
   Ins.msg
-  ExternalSensorData.msg
+  SVS.msg
 )
 
 generate_messages(
