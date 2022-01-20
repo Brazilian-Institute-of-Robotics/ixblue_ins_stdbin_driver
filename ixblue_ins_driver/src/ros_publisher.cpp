@@ -57,6 +57,7 @@ ROSPublisher::ROSPublisher() : nh("~"), diagPub(nh)
 
     // External Sensors
     stdSVSPublisher = nh.advertise<ixblue_ins_msgs::SVS>("ix/svs", 1);
+    stdDVLPublisher = nh.advertise<ixblue_ins_msgs::DVL>("ix/svl", 1);
 }
 
 void ROSPublisher::onNewStdBinData(
