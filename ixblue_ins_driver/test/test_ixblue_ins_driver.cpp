@@ -74,6 +74,20 @@ TEST(ROSPublisherTester, CanFillANavSatFixMsgWithWestLong)
               sensor_msgs::NavSatFix::COVARIANCE_TYPE_UNKNOWN);
 }
 
+TEST(ROSPublisherTester, CanFillSVSMsg) {
+  ixblue_stdbin_decoder::Data::SoundVelocity svs;
+  svs.ext_speedofsound_ms = 1492.01;
+  svs.validityTime_100us = 9999;
+
+  ixblue_stdbin_decoder::Data::BinaryNav nav;
+  nav.soundVelocity = svs;
+
+  const ixblue_ins_msgs::SVSPtr msg = ROSPublisher::toSVSMsg(nav);
+  ASSERT_NE(msg, nullptr);
+  EXPECT_FLOAT_EQ(msg->sound_velocity, 1492.01);
+  EXPECT_EQ(msg->validity_time, 9999);
+}
+
 int main(int argc, char** argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
