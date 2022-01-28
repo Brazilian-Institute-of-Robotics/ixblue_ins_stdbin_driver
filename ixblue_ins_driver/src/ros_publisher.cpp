@@ -55,7 +55,7 @@ ROSPublisher::ROSPublisher() : nh("~"), diagPub(nh)
         nh.advertise<sensor_msgs::TimeReference>("standard/timereference", 1);
     stdInsPublisher = nh.advertise<ixblue_ins_msgs::Ins>("ix/ins", 1);
 
-    // External Sensors
+    // External Sensors Publishers
     stdSVSPublisher = nh.advertise<ixblue_ins_msgs::SVS>("ix/svs", 1);
     stdDVLPublisher = nh.advertise<ixblue_ins_msgs::DVL>("ix/dvl", 1);
 }
