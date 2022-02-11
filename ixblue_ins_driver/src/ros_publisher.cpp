@@ -55,8 +55,9 @@ ROSPublisher::ROSPublisher() : nh("~"), diagPub(nh)
         nh.advertise<sensor_msgs::TimeReference>("standard/timereference", 1);
     stdInsPublisher = nh.advertise<ixblue_ins_msgs::Ins>("ix/ins", 1);
 
-    // External Sensors
+    // External Sensors Publishers
     stdSVSPublisher = nh.advertise<ixblue_ins_msgs::SVS>("ix/svs", 1);
+    stdDVLPublisher = nh.advertise<ixblue_ins_msgs::DVL>("ix/dvl", 1);
 }
 
 void ROSPublisher::onNewStdBinData(
@@ -83,6 +84,7 @@ void ROSPublisher::onNewStdBinData(
     auto navsatfixMsg = toNavSatFixMsg(navData);
     auto iXinsMsg = toiXInsMsg(navData);
     auto SVSMsg = toSVSMsg(navData);
+    auto DVLMsg = toDVLMsg(navData);
 
     if(!useInsAsTimeReference)
     {
@@ -115,10 +117,14 @@ void ROSPublisher::onNewStdBinData(
     }
 
     if (SVSMsg) {
-      SVSMsg->header = headerMsg;
-      stdSVSPublisher.publish(SVSMsg);
+        SVSMsg->header = headerMsg;
+        stdSVSPublisher.publish(SVSMsg);
     }
 
+    if (DVLMsg) {
+        DVLMsg->header = headerMsg;
+        stdDVLPublisher.publish(DVLMsg);
+    }
 }
 
 std_msgs::Header
@@ -481,11 +487,31 @@ ROSPublisher::toSVSMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData) {
       return nullptr;
   }
 
-  // --- Initialisation
   ixblue_ins_msgs::SVSPtr res = boost::make_shared<ixblue_ins_msgs::SVS>();
-
   res->validity_time = navData.soundVelocity.get().validityTime_100us;
   res->sound_velocity = navData.soundVelocity.get().ext_speedofsound_ms;
+
+  return res;
+}
+
+ixblue_ins_msgs::DVLPtr
+ROSPublisher::toDVLMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData) {
+  // --- Check if there are enough data to send the message
+  if (navData.dvlGroundSpeed1.is_initialized() == false) {
+      return nullptr;
+  }
+
+  ixblue_ins_msgs::DVLPtr res = boost::make_shared<ixblue_ins_msgs::DVL>();
+  res->dvl_validity_time = navData.dvlGroundSpeed1.get().validityTime_100us;
+  res->dvl_id = navData.dvlGroundSpeed1.get().dvl_id;
+  res->xv1_groundspeed_ms = navData.dvlGroundSpeed1.get().xv1_groundspeed_ms;
+  res->xv2_groundspeed_ms = navData.dvlGroundSpeed1.get().xv2_groundspeed_ms;
+  res->xv3_groundspeed_ms = navData.dvlGroundSpeed1.get().xv3_groundspeed_ms;
+  res->dvl_speedofsound_ms = navData.dvlGroundSpeed1.get().dvl_speedofsound_ms;
+  res->dvl_altitude_m = navData.dvlGroundSpeed1.get().dvl_altitude_m;
+  res->xv1_stddev_ms = navData.dvlGroundSpeed1.get().xv1_stddev_ms;
+  res->xv2_stddev_ms = navData.dvlGroundSpeed1.get().xv2_stddev_ms;
+  res->xv3_stddev_ms = navData.dvlGroundSpeed1.get().xv3_stddev_ms;
 
   return res;
 }
