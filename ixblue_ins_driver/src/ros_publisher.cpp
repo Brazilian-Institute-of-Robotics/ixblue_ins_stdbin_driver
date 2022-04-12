@@ -10,9 +10,11 @@
 ROSPublisher::ROSPublisher() : nh("~"), diagPub(nh)
 {
     nh.param("frame_id", frame_id, std::string("imu_link_ned"));
+    nh.param("publish_odom", use_compensated_acceleration, false);
     nh.param("time_source", time_source, std::string("ins"));
     nh.param("time_origin", time_origin, std::string("unix"));
     nh.param("use_compensated_acceleration", use_compensated_acceleration, false);
+
 
     if(time_source == std::string("ros"))
     {
@@ -53,11 +55,16 @@ ROSPublisher::ROSPublisher() : nh("~"), diagPub(nh)
     stdNavSatFixPublisher = nh.advertise<sensor_msgs::NavSatFix>("standard/navsatfix", 1);
     stdTimeReferencePublisher =
         nh.advertise<sensor_msgs::TimeReference>("standard/timereference", 1);
+    // Odom INS Publisher
+    stdInsOdomPublisher = nh.advertise<nav_msgs::Odometry>("ix/ins/odom", 1);
     stdInsPublisher = nh.advertise<ixblue_ins_msgs::Ins>("ix/ins", 1);
 
     // External Sensors Publishers
     stdSVSPublisher = nh.advertise<ixblue_ins_msgs::SVS>("ix/svs", 1);
     stdDVLPublisher = nh.advertise<ixblue_ins_msgs::DVL>("ix/dvl", 1);
+
+    // INS message get
+    this->ins_latitude = 0.0;
 }
 
 void ROSPublisher::onNewStdBinData(
@@ -85,6 +92,9 @@ void ROSPublisher::onNewStdBinData(
     auto iXinsMsg = toiXInsMsg(navData);
     auto SVSMsg = toSVSMsg(navData);
     auto DVLMsg = toDVLMsg(navData);
+//  auto odomXinsMsg = toOdomInsMsg();
+
+
 
     if(!useInsAsTimeReference)
     {
@@ -113,6 +123,7 @@ void ROSPublisher::onNewStdBinData(
     if(iXinsMsg)
     {
         iXinsMsg->header = headerMsg;
+        this->ins_latitude = iXinsMsg->latitude;
         stdInsPublisher.publish(iXinsMsg);
     }
 
@@ -125,6 +136,7 @@ void ROSPublisher::onNewStdBinData(
         DVLMsg->header = headerMsg;
         stdDVLPublisher.publish(DVLMsg);
     }
+
 }
 
 std_msgs::Header
@@ -476,10 +488,12 @@ ROSPublisher::toiXInsMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData)
             navData.speedGeographicFrameDeviation.get().up_stddev_msec *
             navData.speedGeographicFrameDeviation.get().up_stddev_msec;
     }
-
+    // Debug Latitude
+    ROS_WARN_STREAM("Hello " << res->latitude << " Hi");
     return res;
 }
 
+//Speed of sound SVS
 ixblue_ins_msgs::SVSPtr
 ROSPublisher::toSVSMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData) {
   // --- Check if there are enough data to send the message
@@ -514,4 +528,13 @@ ROSPublisher::toDVLMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData) {
   res->xv3_stddev_ms = navData.dvlGroundSpeed1.get().xv3_stddev_ms;
 
   return res;
+}
+
+//Odometry INS
+nav_msgs::Odometry odomIns;
+nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
+  ROS_WARN_STREAM("HELLO " << " HI");
+  
+
+  return odomIns;
 }

@@ -6,6 +6,8 @@
 #include <ixblue_stdbin_decoder/data_models/nav_header.h>
 #include <ixblue_stdbin_decoder/data_models/stdbin.h>
 
+#include <nav_msgs/Odometry.h>
+
 #include <ros/node_handle.h>
 #include <ros/publisher.h>
 #include <sensor_msgs/Imu.h>
@@ -44,6 +46,11 @@ public:
     static ixblue_ins_msgs::DVLPtr
     toDVLMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
 
+    static nav_msgs::Odometry convertToOdomIns();
+
+    // INS get message
+    float ins_latitude;
+
 protected:
     // Header
     std_msgs::Header getHeader(const ixblue_stdbin_decoder::Data::NavHeader& headerData,
@@ -61,6 +68,9 @@ protected:
     ros::Publisher stdImuPublisher;
     ros::Publisher stdNavSatFixPublisher;
     ros::Publisher stdTimeReferencePublisher;
+    // Odom Publisher - TODO remove comment later
+    ros::Publisher stdInsOdomPublisher;
+    // Odom Publisher
     ros::Publisher stdInsPublisher;
     ros::Publisher stdSVSPublisher;
     ros::Publisher stdDVLPublisher;
@@ -69,4 +79,5 @@ protected:
     // Utils
     bool useInsAsTimeReference = true;
     bool useUnixAsTimeOrigin = true;
+
 };
