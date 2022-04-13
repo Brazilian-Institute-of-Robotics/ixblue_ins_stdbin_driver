@@ -8,6 +8,9 @@
 #include <ixblue_stdbin_decoder/data_models/nav_header.h>
 #include <ixblue_stdbin_decoder/data_models/stdbin.h>
 
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+
 #include <ros/node_handle.h>
 #include "ros/subscriber.h"
 
@@ -20,7 +23,7 @@ class InsDvlListener {
     ros::Subscriber ins_dvl_listener_;
 
 
-    void insDvlCallback(const ixblue_ins_msgs::InsPtr& msg);
+    void insDvlCallback(const ixblue_ins_msgs::InsPtr& msg_ins);
 
 
 };

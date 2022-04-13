@@ -46,10 +46,13 @@ public:
     static ixblue_ins_msgs::DVLPtr
     toDVLMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
 
-    static nav_msgs::Odometry convertToOdomIns();
+    nav_msgs::Odometry convertToOdomIns();
 
     // INS get message
-    float ins_latitude;
+    sensor_msgs::ImuPtr imuMsgGet;
+    ixblue_ins_msgs::DVLPtr DVLMsgGet;
+    ixblue_ins_msgs::InsPtr iXinsMsgGet;
+    ixblue_ins_msgs::SVSPtr SVSMsgGet;
 
 protected:
     // Header
@@ -61,6 +64,8 @@ protected:
     std::string time_source;
     std::string time_origin;
     bool use_compensated_acceleration;
+    bool publish_odom_ins;
+    bool dvl_available;
 
     ros::NodeHandle nh;
 
@@ -68,13 +73,13 @@ protected:
     ros::Publisher stdImuPublisher;
     ros::Publisher stdNavSatFixPublisher;
     ros::Publisher stdTimeReferencePublisher;
-    // Odom Publisher - TODO remove comment later
-    ros::Publisher stdInsOdomPublisher;
-    // Odom Publisher
     ros::Publisher stdInsPublisher;
     ros::Publisher stdSVSPublisher;
     ros::Publisher stdDVLPublisher;
     DiagnosticsPublisher diagPub;
+
+    // Odom Publisher
+    ros::Publisher stdInsOdomPublisher;
 
     // Utils
     bool useInsAsTimeReference = true;
