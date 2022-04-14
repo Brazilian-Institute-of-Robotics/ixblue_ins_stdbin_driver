@@ -65,7 +65,7 @@ protected:
     std::string time_origin;
     bool use_compensated_acceleration;
     bool publish_odom_ins;
-    bool dvl_available;
+    bool dvl_available; // TODO - Remove later. If the DVLMsgGet works
 
     ros::NodeHandle nh;
 

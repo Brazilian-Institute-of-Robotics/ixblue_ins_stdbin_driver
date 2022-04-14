@@ -532,6 +532,8 @@ ROSPublisher::toDVLMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData) {
   res->xv2_stddev_ms = navData.dvlGroundSpeed1.get().xv2_stddev_ms;
   res->xv3_stddev_ms = navData.dvlGroundSpeed1.get().xv3_stddev_ms;
 
+  // TODO - Add Depth sensor after configuration on the INS interface
+
   return res;
 }
 
@@ -540,7 +542,7 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
 
   nav_msgs::Odometry odomIns;
 
-  ROS_WARN_STREAM("INS 2 " << this->iXinsMsgGet->latitude << " Latitude");
+  ROS_WARN_STREAM("Publishing ODOM INS"); // Debug - TODO - Remove later
   odomIns.header = iXinsMsgGet->header;
   odomIns.child_frame_id = frame_id;
   odomIns.pose.pose.position.x = iXinsMsgGet->latitude;
@@ -552,45 +554,49 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
   odomIns.pose.pose.orientation.z = imuMsgGet->orientation.z;
   odomIns.pose.pose.orientation.w = imuMsgGet->orientation.w;
 
-  // odomIns.pose.covariance = float[36] covariance_pose;
-  // Temp values
+  // Odom Covariance for pose(0, 7 and 14) and heading(21, 28 and 35)
+  odomIns.pose.covariance[0] = iXinsMsgGet->position_covariance[0];
+  odomIns.pose.covariance[7] = iXinsMsgGet->position_covariance[4];
+  odomIns.pose.covariance[14] = iXinsMsgGet->position_covariance[8];
+  odomIns.pose.covariance[21] = iXinsMsgGet->attitude_covariance[0];
+  odomIns.pose.covariance[28] = iXinsMsgGet->attitude_covariance[4];
+  odomIns.pose.covariance[35] = iXinsMsgGet->attitude_covariance[8];
+
   for(int i = 0; i<36; i++) {
-    if(i == 0 || i == 7 || i == 14) {
-      odomIns.pose.covariance[i] = .01;
-     }
-     else if (i == 21 || i == 28 || i== 35) {
-       odomIns.pose.covariance[i] += 0.1;
-     }
-     else {
-       odomIns.pose.covariance[i] = 0;
-     }
+    if(i != 0 || i != 7 || i != 14 || i != 21 || i != 28 || i != 35) {
+       odomIns.pose.covariance[i] = 0.0;
+    }
   }
   
-  if(dvl_available) {
+  if(DVLMsgGet) {
+    // TODO - Need to check if it start to publish the speed vessel frame in case of DVL stop publishing
     odomIns.twist.twist.linear.x = DVLMsgGet->xv1_groundspeed_ms; // Longitudinal ground speed
     odomIns.twist.twist.linear.y = DVLMsgGet->xv2_groundspeed_ms; // Transverse ground speed
     odomIns.twist.twist.linear.z = DVLMsgGet->xv3_groundspeed_ms; // Vertical speed
   }
   else {
-  odomIns.twist.twist.linear.x = iXinsMsgGet->speed_vessel_frame.x; // Longitudinal ground speed
-  odomIns.twist.twist.linear.y = iXinsMsgGet->speed_vessel_frame.y; // Transverse ground speed
-  odomIns.twist.twist.linear.z = iXinsMsgGet->speed_vessel_frame.z; // Vertical speed
+    odomIns.twist.twist.linear.x = iXinsMsgGet->speed_vessel_frame.x; // Longitudinal ground speed
+    odomIns.twist.twist.linear.y = iXinsMsgGet->speed_vessel_frame.y; // Transverse ground speed
+    odomIns.twist.twist.linear.z = iXinsMsgGet->speed_vessel_frame.z; // Vertical speed
+    ROS_WARN("Using Speed Vessel Frame from INS");
   }
+  // Angular Velocity
+  odomIns.twist.twist.angular.x = 0.0;
+  odomIns.twist.twist.angular.y = 0.0;
+  odomIns.twist.twist.angular.z = 0.0;
 
-  // odomIns.pose.covariance = float[36] covariance_pose;
-  // Temp values
+  // Odom Covariance for velocity(0, 7 and 14)
+  odomIns.twist.covariance[0] = iXinsMsgGet->speed_vessel_frame_covariance[0];
+  odomIns.twist.covariance[7] = iXinsMsgGet->speed_vessel_frame_covariance[4];
+  odomIns.twist.covariance[14] = iXinsMsgGet->speed_vessel_frame_covariance[8];
+  odomIns.twist.covariance[21] = 0.0;
+  odomIns.twist.covariance[28] = 0.0;
+  odomIns.twist.covariance[35] = 0.0;
+
   for(int i = 0; i<36; i++) {
-    if(i == 0 || i == 7 || i == 14) {
-      odomIns.twist.covariance[i] = .01;
-     }
-     else if (i == 21 || i == 28 || i== 35) {
-       odomIns.twist.covariance[i] += 0.1;
-     }
-     else {
-       odomIns.twist.covariance[i] = 0;
-     }
+    if(i != 0 || i != 7 || i != 14 || i != 21 || i != 28 || i != 35) {
+       odomIns.twist.covariance[i] = 0.0;
+    }
   }
-
-  // odomIns.twist.covariance = float[36] covariance_pose;
   return odomIns;
 }
