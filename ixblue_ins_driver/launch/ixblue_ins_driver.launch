@@ -27,4 +27,20 @@
 		<param name="dvl_available" value="$(arg dvl_available)"/>
 
 	</node>
+
+  <!-- Converts Lat/Lon from Microstrain to local X/Y -->
+  <node pkg="geonav_transform" type="geonav_transform_node" name="geonav_transform_node" clear_params="true" output="screen" respawn="true">
+    <!-- Datum as latitude, longitude [decimal deg.], yaw [ENU, degrees] -->
+    <!-- Probably Datum is the offset for latitude and longitude position -->
+    <!-- Latitude -12.70715 degrees = -12 degrees and 42.4292 -->
+    <!-- Longitude -38.17446 degrees = -38 degrees and 10.4677 -->
+    <rosparam param="datum">[-12.70715, -38.17446, 0.0]</rosparam>  
+    <param name="base_link_frame_id" value="imu_link_ned" />
+    <param name="broadcast_utm2odom_transform" value="false"/>
+    <param name="broadcast_odom2base_transform" value="false"/>
+
+    <!-- <param name="odom_frame_id" value="imu_link_ned"/> -->
+    <remap from="nav_odom" to="ixblue_ins_driver/ix/ins/odom"/>
+  </node>
+
 </launch>
