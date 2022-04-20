@@ -57,8 +57,8 @@ ROSPublisher::ROSPublisher() : nh("~"), diagPub(nh)
     stdTimeReferencePublisher =
         nh.advertise<sensor_msgs::TimeReference>("standard/timereference", 1);
     stdInsPublisher = nh.advertise<ixblue_ins_msgs::Ins>("ix/ins", 1);
-    // Odom INS Publisher
-    stdInsOdomPublisher = nh.advertise<nav_msgs::Odometry>("ix/ins/odom", 1);
+    // Odom INS Publisher - Publish latitude in Y and longitude in X in degrees. 
+    stdInsOdomPublisher = nh.advertise<nav_msgs::Odometry>("ix/ins/odom_deg", 1); 
 
     // External Sensors Publishers
     stdSVSPublisher = nh.advertise<ixblue_ins_msgs::SVS>("ix/svs", 1);
@@ -544,7 +544,6 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
 
   nav_msgs::Odometry odomIns;
 
-  ROS_WARN_STREAM("Publishing ODOM INS"); // Debug - TODO - Remove later
   odomIns.header = iXinsMsgGet->header;
   odomIns.child_frame_id = frame_id;
   odomIns.pose.pose.position.y = iXinsMsgGet->latitude;  // Latitude
@@ -555,6 +554,10 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
   odomIns.pose.pose.orientation.z = imuMsgGet->orientation.z;
   odomIns.pose.pose.orientation.w = imuMsgGet->orientation.w;
 
+  for(int i = 0; i<36; i++) {
+    odomIns.pose.covariance[i] = 0.0;
+  }
+
   // Odom Covariance for pose(0, 7 and 14) and heading(21, 28 and 35)
   odomIns.pose.covariance[0] = iXinsMsgGet->position_covariance[0];
   odomIns.pose.covariance[7] = iXinsMsgGet->position_covariance[4];
@@ -562,12 +565,6 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
   odomIns.pose.covariance[21] = iXinsMsgGet->attitude_covariance[0];
   odomIns.pose.covariance[28] = iXinsMsgGet->attitude_covariance[4];
   odomIns.pose.covariance[35] = iXinsMsgGet->attitude_covariance[8];
-
-  for(int i = 0; i<36; i++) {
-    if(i != 0 || i != 7 || i != 14 || i != 21 || i != 28 || i != 35) {
-       odomIns.pose.covariance[i] = 0.0;
-    }
-  }
   
   if(DVLMsgGet) {
 
@@ -592,7 +589,7 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
       odomIns.twist.twist.linear.y = DVLMsgGet->xv2_groundspeed_ms; // Transverse ground speed
       odomIns.twist.twist.linear.z = DVLMsgGet->xv3_groundspeed_ms; // Vertical speed
     }
-    ROS_WARN("Using Speed Frame and altitude from DVL");
+    ROS_INFO("Using Speed Frame and altitude from DVL");
 
   }
   else {
@@ -601,12 +598,16 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
     odomIns.twist.twist.linear.z = iXinsMsgGet->speed_vessel_frame.z; // Vertical speed
     odomIns.pose.pose.position.z = iXinsMsgGet->altitude; // Altitude from INS
 
-    ROS_WARN("Using Speed Vessel Frame and altitude from INS");
+    ROS_INFO("Using Speed Vessel Frame and altitude from INS");
   }
   // Angular Velocity
   odomIns.twist.twist.angular.x = 0.0;
   odomIns.twist.twist.angular.y = 0.0;
   odomIns.twist.twist.angular.z = 0.0;
+
+  for(int i = 0; i<36; i++) {
+    odomIns.twist.covariance[i] = 0.0;
+  }
 
   // Odom Covariance for velocity(0, 7 and 14)
   odomIns.twist.covariance[0] = iXinsMsgGet->speed_vessel_frame_covariance[0];
@@ -616,10 +617,6 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
   odomIns.twist.covariance[28] = 0.0;
   odomIns.twist.covariance[35] = 0.0;
 
-  for(int i = 0; i<36; i++) {
-    if(i != 0 || i != 7 || i != 14 || i != 21 || i != 28 || i != 35) {
-       odomIns.twist.covariance[i] = 0.0;
-    }
-  }
+
   return odomIns;
 }

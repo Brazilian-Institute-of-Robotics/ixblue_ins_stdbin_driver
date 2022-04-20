@@ -40,7 +40,10 @@
     <param name="broadcast_odom2base_transform" value="false"/>
 
     <!-- <param name="odom_frame_id" value="imu_link_ned"/> -->
-    <remap from="nav_odom" to="ixblue_ins_driver/ix/ins/odom"/>
+		<!-- Odom INS Subscrive - Subscribe latitude in Y and longitude in X in degrees. -->
+    <remap from="nav_odom" to="ixblue_ins_driver/ix/ins/odom_deg"/>
+		 <remap from="geonav_odom" to="ixblue_ins_driver/ix/ins/odom"/>
+
   </node>
 
 </launch>
