@@ -3,7 +3,7 @@
 <launch>
 	<arg name="frame_id" default="imu_link_ned"/>
 	<arg name="udp_port" default="8002"/>
-	<arg name="ip" default="192.168.255.255"/>
+	<arg name="ip" default="192.168.1.255"/>
 	<arg name="time_source" default="ins"/>
 	<arg name="time_origin" default="unix"/>
 	<arg name="expected_frequency" default="10.0"/>

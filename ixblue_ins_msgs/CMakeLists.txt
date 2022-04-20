@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   std_msgs
   message_generation
+  geonav_transform
 )
 
 add_message_files(
@@ -26,4 +27,5 @@ catkin_package(
   geometry_msgs
   std_msgs
   message_runtime
+  geonav_transform
 )

@@ -532,7 +532,9 @@ ROSPublisher::toDVLMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData) {
   res->xv2_stddev_ms = navData.dvlGroundSpeed1.get().xv2_stddev_ms;
   res->xv3_stddev_ms = navData.dvlGroundSpeed1.get().xv3_stddev_ms;
 
-  // TODO - Add Depth sensor after configuration on the INS interface
+  // TODO - Add Depth sensor after configuration on the INS interface -SOLVED
+  // TODO - Fix velocity using SVS speed of sound data - SOLVED
+  // TODO - Verify if the dvl speed of sound velocity is the same published by the SVS - SOLVED - It is not
 
   return res;
 }
@@ -545,9 +547,8 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
   ROS_WARN_STREAM("Publishing ODOM INS"); // Debug - TODO - Remove later
   odomIns.header = iXinsMsgGet->header;
   odomIns.child_frame_id = frame_id;
-  odomIns.pose.pose.position.x = iXinsMsgGet->latitude;
-  odomIns.pose.pose.position.y = iXinsMsgGet->longitude;
-  odomIns.pose.pose.position.z = iXinsMsgGet->altitude;
+  odomIns.pose.pose.position.y = iXinsMsgGet->latitude;  // Latitude
+  odomIns.pose.pose.position.x = iXinsMsgGet->longitude; // Longitude
 
   odomIns.pose.pose.orientation.x = imuMsgGet->orientation.x;
   odomIns.pose.pose.orientation.y = imuMsgGet->orientation.y;
@@ -557,7 +558,7 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
   // Odom Covariance for pose(0, 7 and 14) and heading(21, 28 and 35)
   odomIns.pose.covariance[0] = iXinsMsgGet->position_covariance[0];
   odomIns.pose.covariance[7] = iXinsMsgGet->position_covariance[4];
-  odomIns.pose.covariance[14] = iXinsMsgGet->position_covariance[8];
+  odomIns.pose.covariance[14] = iXinsMsgGet->position_covariance[8]; // Altitude covariance without DVL
   odomIns.pose.covariance[21] = iXinsMsgGet->attitude_covariance[0];
   odomIns.pose.covariance[28] = iXinsMsgGet->attitude_covariance[4];
   odomIns.pose.covariance[35] = iXinsMsgGet->attitude_covariance[8];
@@ -569,16 +570,38 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
   }
   
   if(DVLMsgGet) {
+
+    odomIns.pose.pose.position.z = DVLMsgGet->dvl_altitude_m; // Altitude from DVL
+
     // TODO - Need to check if it start to publish the speed vessel frame in case of DVL stop publishing
-    odomIns.twist.twist.linear.x = DVLMsgGet->xv1_groundspeed_ms; // Longitudinal ground speed
-    odomIns.twist.twist.linear.y = DVLMsgGet->xv2_groundspeed_ms; // Transverse ground speed
-    odomIns.twist.twist.linear.z = DVLMsgGet->xv3_groundspeed_ms; // Vertical speed
+    // Answer - It continues to publish. When it starts, it does not stop to publish.
+
+
+    float soundVelocityCorrector = SVSMsgGet->sound_velocity/DVLMsgGet->dvl_speedofsound_ms;
+
+
+    if(SVSMsgGet) { // With SVS corretion
+      float soundVelocityCoefficient = SVSMsgGet->sound_velocity/DVLMsgGet->dvl_speedofsound_ms;
+
+      odomIns.twist.twist.linear.x = soundVelocityCoefficient*DVLMsgGet->xv1_groundspeed_ms; // Longitudinal ground speed
+      odomIns.twist.twist.linear.y = soundVelocityCoefficient*DVLMsgGet->xv2_groundspeed_ms; // Transverse ground speed
+      odomIns.twist.twist.linear.z = soundVelocityCoefficient*DVLMsgGet->xv3_groundspeed_ms; // Vertical speed
+    }
+    else { // Without SVS corretion
+      odomIns.twist.twist.linear.x = DVLMsgGet->xv1_groundspeed_ms; // Longitudinal ground speed
+      odomIns.twist.twist.linear.y = DVLMsgGet->xv2_groundspeed_ms; // Transverse ground speed
+      odomIns.twist.twist.linear.z = DVLMsgGet->xv3_groundspeed_ms; // Vertical speed
+    }
+    ROS_WARN("Using Speed Frame and altitude from DVL");
+
   }
   else {
     odomIns.twist.twist.linear.x = iXinsMsgGet->speed_vessel_frame.x; // Longitudinal ground speed
     odomIns.twist.twist.linear.y = iXinsMsgGet->speed_vessel_frame.y; // Transverse ground speed
     odomIns.twist.twist.linear.z = iXinsMsgGet->speed_vessel_frame.z; // Vertical speed
-    ROS_WARN("Using Speed Vessel Frame from INS");
+    odomIns.pose.pose.position.z = iXinsMsgGet->altitude; // Altitude from INS
+
+    ROS_WARN("Using Speed Vessel Frame and altitude from INS");
   }
   // Angular Velocity
   odomIns.twist.twist.angular.x = 0.0;
