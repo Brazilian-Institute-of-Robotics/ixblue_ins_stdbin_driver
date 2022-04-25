@@ -532,10 +532,6 @@ ROSPublisher::toDVLMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData) {
   res->xv2_stddev_ms = navData.dvlGroundSpeed1.get().xv2_stddev_ms;
   res->xv3_stddev_ms = navData.dvlGroundSpeed1.get().xv3_stddev_ms;
 
-  // TODO - Add Depth sensor after configuration on the INS interface -SOLVED
-  // TODO - Fix velocity using SVS speed of sound data - SOLVED
-  // TODO - Verify if the dvl speed of sound velocity is the same published by the SVS - SOLVED - It is not
-
   return res;
 }
 
@@ -570,12 +566,7 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
 
     odomIns.pose.pose.position.z = DVLMsgGet->dvl_altitude_m; // Altitude from DVL
 
-    // TODO - Need to check if it start to publish the speed vessel frame in case of DVL stop publishing
-    // Answer - It continues to publish. When it starts, it does not stop to publish.
-
-
     float soundVelocityCorrector = SVSMsgGet->sound_velocity/DVLMsgGet->dvl_speedofsound_ms;
-
 
     if(SVSMsgGet) { // With SVS corretion
       float soundVelocityCoefficient = SVSMsgGet->sound_velocity/DVLMsgGet->dvl_speedofsound_ms;
@@ -589,16 +580,12 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
       odomIns.twist.twist.linear.y = DVLMsgGet->xv2_groundspeed_ms; // Transverse ground speed
       odomIns.twist.twist.linear.z = DVLMsgGet->xv3_groundspeed_ms; // Vertical speed
     }
-    ROS_INFO("Using Speed Frame and altitude from DVL");
-
   }
   else {
     odomIns.twist.twist.linear.x = iXinsMsgGet->speed_vessel_frame.x; // Longitudinal ground speed
     odomIns.twist.twist.linear.y = iXinsMsgGet->speed_vessel_frame.y; // Transverse ground speed
     odomIns.twist.twist.linear.z = iXinsMsgGet->speed_vessel_frame.z; // Vertical speed
     odomIns.pose.pose.position.z = iXinsMsgGet->altitude; // Altitude from INS
-
-    ROS_INFO("Using Speed Vessel Frame and altitude from INS");
   }
   // Angular Velocity
   odomIns.twist.twist.angular.x = 0.0;
