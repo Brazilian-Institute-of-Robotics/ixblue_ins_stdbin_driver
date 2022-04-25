@@ -568,6 +568,8 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
 
     float soundVelocityCorrector = SVSMsgGet->sound_velocity/DVLMsgGet->dvl_speedofsound_ms;
 
+    // TODO -  The DVL speed should be in relation with the INS frame. Need a transformation.
+
     if(SVSMsgGet) { // With SVS corretion
       float soundVelocityCoefficient = SVSMsgGet->sound_velocity/DVLMsgGet->dvl_speedofsound_ms;
 
