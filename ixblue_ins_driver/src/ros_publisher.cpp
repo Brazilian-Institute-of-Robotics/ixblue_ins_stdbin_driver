@@ -554,7 +554,7 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
     odomIns.pose.covariance[i] = 0.0;
   }
 
-  // Odom Covariance for pose(0, 7 and 14) and heading(21, 28 and 35)
+  // Odom Covariance for position(0, 7 and 14) and heading(21, 28 and 35)
   odomIns.pose.covariance[0] = iXinsMsgGet->position_covariance[0];
   odomIns.pose.covariance[7] = iXinsMsgGet->position_covariance[4];
   odomIns.pose.covariance[14] = iXinsMsgGet->position_covariance[8]; // Altitude covariance without DVL
