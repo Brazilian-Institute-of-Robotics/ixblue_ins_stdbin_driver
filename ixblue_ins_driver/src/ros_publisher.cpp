@@ -561,7 +561,7 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
   odomIns.pose.covariance[35] = iXinsMsgGet->attitude_covariance[8];
 
   if(SVSMsgGet) { // With SVS corretion
-    float speed_of_sound_water = 1480; // Speed of sound on water in typical conditions.
+    float speed_of_sound_water = 1500; // Speed of sound. Fixed value.
 
     float soundVelocityCoefficient = SVSMsgGet->sound_velocity/speed_of_sound_water;
 
