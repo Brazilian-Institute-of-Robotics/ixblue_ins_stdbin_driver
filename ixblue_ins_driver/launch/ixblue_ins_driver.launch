@@ -10,7 +10,6 @@
 	<arg name="max_latency" default="1.0"/>
 	<arg name="connection_lost_timeout" default="10.0"/>
 	<arg name="use_compensated_acceleration" default="false"/>
-	<arg name="publish_odom_ins" default="true"/>
 
 	<node pkg="ixblue_ins_driver" type="node" name="ixblue_ins_driver" output="screen">
 		<param name="frame_id" value="$(arg frame_id)"/>
@@ -22,6 +21,6 @@
 		<param name="max_latency" value="$(arg max_latency)"/>
 		<param name="connection_lost_timeout" value="$(arg connection_lost_timeout)"/>
 		<param name="use_compensated_acceleration" value="$(arg use_compensated_acceleration)"/>
-		<param name="publish_odom_ins" value="$(arg publish_odom_ins)"/>
+		<param name="publish_odom_ins" value="false"/>
 	</node>
 </launch>

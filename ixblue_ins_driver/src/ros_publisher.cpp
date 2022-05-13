@@ -10,11 +10,10 @@
 ROSPublisher::ROSPublisher() : nh("~"), diagPub(nh)
 {
     nh.param("frame_id", frame_id, std::string("imu_link_ned"));
-    nh.param("publish_odom", use_compensated_acceleration, false);
     nh.param("time_source", time_source, std::string("ins"));
     nh.param("time_origin", time_origin, std::string("unix"));
     nh.param("use_compensated_acceleration", use_compensated_acceleration, false);
-    nh.param("publish_odom_ins", publish_odom_ins, true);
+    nh.param("publish_odom_ins", publish_odom_ins, false);
 
     if(time_source == std::string("ros"))
     {
@@ -556,36 +555,24 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
   // Odom Covariance for position(0, 7 and 14) and heading(21, 28 and 35)
   odomIns.pose.covariance[0] = iXinsMsgGet->position_covariance[0];
   odomIns.pose.covariance[7] = iXinsMsgGet->position_covariance[4];
-  odomIns.pose.covariance[14] = iXinsMsgGet->position_covariance[8]; // Altitude covariance without DVL
+  odomIns.pose.covariance[14] = iXinsMsgGet->position_covariance[8]; // Altitude covariance
   odomIns.pose.covariance[21] = iXinsMsgGet->attitude_covariance[0];
   odomIns.pose.covariance[28] = iXinsMsgGet->attitude_covariance[4];
   odomIns.pose.covariance[35] = iXinsMsgGet->attitude_covariance[8];
-  
-  if(DVLMsgGet) {
 
-    odomIns.pose.pose.position.z = DVLMsgGet->dvl_altitude_m; // Altitude from DVL
+  if(SVSMsgGet) { // With SVS corretion
+    float speed_of_sound_water = 1480; // Speed of sound on water in typical conditions.
 
-    float soundVelocityCorrector = SVSMsgGet->sound_velocity/DVLMsgGet->dvl_speedofsound_ms;
+    float soundVelocityCoefficient = SVSMsgGet->sound_velocity/speed_of_sound_water;
 
-    // TODO -  The DVL speed should be in relation with the INS frame. Need a transformation.
-
-    if(SVSMsgGet) { // With SVS corretion
-      float soundVelocityCoefficient = SVSMsgGet->sound_velocity/DVLMsgGet->dvl_speedofsound_ms;
-
-      odomIns.twist.twist.linear.x = soundVelocityCoefficient*DVLMsgGet->xv1_groundspeed_ms; // Longitudinal ground speed
-      odomIns.twist.twist.linear.y = soundVelocityCoefficient*DVLMsgGet->xv2_groundspeed_ms; // Transverse ground speed
-      odomIns.twist.twist.linear.z = soundVelocityCoefficient*DVLMsgGet->xv3_groundspeed_ms; // Vertical speed
-    }
-    else { // Without SVS corretion
-      odomIns.twist.twist.linear.x = DVLMsgGet->xv1_groundspeed_ms; // Longitudinal ground speed
-      odomIns.twist.twist.linear.y = DVLMsgGet->xv2_groundspeed_ms; // Transverse ground speed
-      odomIns.twist.twist.linear.z = DVLMsgGet->xv3_groundspeed_ms; // Vertical speed
-    }
+    odomIns.twist.twist.linear.x = soundVelocityCoefficient*iXinsMsgGet->speed_vessel_frame.x;
+    odomIns.twist.twist.linear.y = soundVelocityCoefficient*iXinsMsgGet->speed_vessel_frame.y;
+    odomIns.twist.twist.linear.z = soundVelocityCoefficient*iXinsMsgGet->speed_vessel_frame.z;
   }
-  else {
-    odomIns.twist.twist.linear.x = iXinsMsgGet->speed_vessel_frame.x; // Longitudinal ground speed
-    odomIns.twist.twist.linear.y = iXinsMsgGet->speed_vessel_frame.y; // Transverse ground speed
-    odomIns.twist.twist.linear.z = iXinsMsgGet->speed_vessel_frame.z; // Vertical speed
+  else { // Without SVS corretion
+    odomIns.twist.twist.linear.x = iXinsMsgGet->speed_vessel_frame.x;
+    odomIns.twist.twist.linear.y = iXinsMsgGet->speed_vessel_frame.y;
+    odomIns.twist.twist.linear.z = iXinsMsgGet->speed_vessel_frame.z;
     odomIns.pose.pose.position.z = iXinsMsgGet->altitude; // Altitude from INS
   }
   // Angular Velocity
