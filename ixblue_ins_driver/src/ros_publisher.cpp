@@ -606,6 +606,5 @@ nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
   odomIns.twist.covariance[28] = 0.0;
   odomIns.twist.covariance[35] = 0.0;
 
-
   return odomIns;
 }
