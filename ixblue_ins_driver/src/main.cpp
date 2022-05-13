@@ -1,5 +1,4 @@
 #include "udp_listener.h"
-
 #include <ros/ros.h>
 
 int main(int argc, char* argv[])
@@ -22,7 +21,6 @@ int main(int argc, char* argv[])
     }
 
     UDPListener udpListener(ip, static_cast<uint16_t>(udp_port));
-
 
     ros::spin();
     return 0;

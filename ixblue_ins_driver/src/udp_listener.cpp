@@ -11,7 +11,6 @@ UDPListener::UDPListener(const std::string& ip, uint16_t port)
     listenNextData();
     ROS_DEBUG_STREAM("Starting asio thread");
     asioThread = std::thread([&]() { service.run(); });
-
 }
 
 void UDPListener::listenNextData()

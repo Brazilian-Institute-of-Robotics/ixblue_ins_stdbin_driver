@@ -15,7 +15,6 @@ ROSPublisher::ROSPublisher() : nh("~"), diagPub(nh)
     nh.param("time_origin", time_origin, std::string("unix"));
     nh.param("use_compensated_acceleration", use_compensated_acceleration, false);
     nh.param("publish_odom_ins", publish_odom_ins, true);
-    nh.param("dvl_available", dvl_available, false);
 
     if(time_source == std::string("ros"))
     {
