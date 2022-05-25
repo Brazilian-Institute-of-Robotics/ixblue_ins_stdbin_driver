@@ -13,6 +13,7 @@ ROSPublisher::ROSPublisher() : nh("~"), diagPub(nh)
     nh.param("time_source", time_source, std::string("ins"));
     nh.param("time_origin", time_origin, std::string("unix"));
     nh.param("use_compensated_acceleration", use_compensated_acceleration, false);
+    nh.param("publish_odom_ins", publish_odom_ins, false);
 
     if(time_source == std::string("ros"))
     {
@@ -54,10 +55,13 @@ ROSPublisher::ROSPublisher() : nh("~"), diagPub(nh)
     stdTimeReferencePublisher =
         nh.advertise<sensor_msgs::TimeReference>("standard/timereference", 1);
     stdInsPublisher = nh.advertise<ixblue_ins_msgs::Ins>("ix/ins", 1);
+    // Odom INS Publisher - Publish latitude in Y and longitude in X in degrees. 
+    stdInsOdomPublisher = nh.advertise<nav_msgs::Odometry>("ix/ins/odom_deg", 1); 
 
     // External Sensors Publishers
     stdSVSPublisher = nh.advertise<ixblue_ins_msgs::SVS>("ix/svs", 1);
     stdDVLPublisher = nh.advertise<ixblue_ins_msgs::DVL>("ix/dvl", 1);
+
 }
 
 void ROSPublisher::onNewStdBinData(
@@ -85,6 +89,11 @@ void ROSPublisher::onNewStdBinData(
     auto iXinsMsg = toiXInsMsg(navData);
     auto SVSMsg = toSVSMsg(navData);
     auto DVLMsg = toDVLMsg(navData);
+
+    this->imuMsgGet = imuMsg;
+    this->iXinsMsgGet = iXinsMsg;
+    this->SVSMsgGet = SVSMsg;
+    this->DVLMsgGet = DVLMsg;
 
     if(!useInsAsTimeReference)
     {
@@ -114,6 +123,12 @@ void ROSPublisher::onNewStdBinData(
     {
         iXinsMsg->header = headerMsg;
         stdInsPublisher.publish(iXinsMsg);
+        // Publish INS Odom Message
+        if(publish_odom_ins)
+        {
+          auto insOdomMsg = convertToOdomIns();
+          stdInsOdomPublisher.publish(insOdomMsg);
+          }
     }
 
     if (SVSMsg) {
@@ -125,6 +140,7 @@ void ROSPublisher::onNewStdBinData(
         DVLMsg->header = headerMsg;
         stdDVLPublisher.publish(DVLMsg);
     }
+
 }
 
 std_msgs::Header
@@ -480,6 +496,7 @@ ROSPublisher::toiXInsMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData)
     return res;
 }
 
+//Speed of sound SVS
 ixblue_ins_msgs::SVSPtr
 ROSPublisher::toSVSMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData) {
   // --- Check if there are enough data to send the message
@@ -514,4 +531,66 @@ ROSPublisher::toDVLMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData) {
   res->xv3_stddev_ms = navData.dvlGroundSpeed1.get().xv3_stddev_ms;
 
   return res;
+}
+
+//Odometry INS
+nav_msgs::Odometry ROSPublisher::convertToOdomIns() {
+
+  nav_msgs::Odometry odomIns;
+
+  odomIns.header = iXinsMsgGet->header;
+  odomIns.child_frame_id = frame_id;
+  odomIns.pose.pose.position.y = iXinsMsgGet->latitude;  // Latitude
+  odomIns.pose.pose.position.x = iXinsMsgGet->longitude; // Longitude
+
+  odomIns.pose.pose.orientation.x = imuMsgGet->orientation.x;
+  odomIns.pose.pose.orientation.y = imuMsgGet->orientation.y;
+  odomIns.pose.pose.orientation.z = imuMsgGet->orientation.z;
+  odomIns.pose.pose.orientation.w = imuMsgGet->orientation.w;
+
+  for(int i = 0; i<36; i++) {
+    odomIns.pose.covariance[i] = 0.0;
+  }
+
+  // Odom Covariance for position(0, 7 and 14) and heading(21, 28 and 35)
+  odomIns.pose.covariance[0] = iXinsMsgGet->position_covariance[0];
+  odomIns.pose.covariance[7] = iXinsMsgGet->position_covariance[4];
+  odomIns.pose.covariance[14] = iXinsMsgGet->position_covariance[8]; // Altitude covariance
+  odomIns.pose.covariance[21] = iXinsMsgGet->attitude_covariance[0];
+  odomIns.pose.covariance[28] = iXinsMsgGet->attitude_covariance[4];
+  odomIns.pose.covariance[35] = iXinsMsgGet->attitude_covariance[8];
+
+  if(SVSMsgGet) { // With SVS corretion
+    float speed_of_sound_water = 1500; // Speed of sound. Fixed value.
+
+    float soundVelocityCoefficient = SVSMsgGet->sound_velocity/speed_of_sound_water;
+
+    odomIns.twist.twist.linear.x = soundVelocityCoefficient*iXinsMsgGet->speed_vessel_frame.x;
+    odomIns.twist.twist.linear.y = soundVelocityCoefficient*iXinsMsgGet->speed_vessel_frame.y;
+    odomIns.twist.twist.linear.z = soundVelocityCoefficient*iXinsMsgGet->speed_vessel_frame.z;
+  }
+  else { // Without SVS corretion
+    odomIns.twist.twist.linear.x = iXinsMsgGet->speed_vessel_frame.x;
+    odomIns.twist.twist.linear.y = iXinsMsgGet->speed_vessel_frame.y;
+    odomIns.twist.twist.linear.z = iXinsMsgGet->speed_vessel_frame.z;
+    odomIns.pose.pose.position.z = iXinsMsgGet->altitude; // Altitude from INS
+  }
+  // Angular Velocity
+  odomIns.twist.twist.angular.x = 0.0;
+  odomIns.twist.twist.angular.y = 0.0;
+  odomIns.twist.twist.angular.z = 0.0;
+
+  for(int i = 0; i<36; i++) {
+    odomIns.twist.covariance[i] = 0.0;
+  }
+
+  // Odom Covariance for velocity(0, 7 and 14)
+  odomIns.twist.covariance[0] = iXinsMsgGet->speed_vessel_frame_covariance[0];
+  odomIns.twist.covariance[7] = iXinsMsgGet->speed_vessel_frame_covariance[4];
+  odomIns.twist.covariance[14] = iXinsMsgGet->speed_vessel_frame_covariance[8];
+  odomIns.twist.covariance[21] = 0.0;
+  odomIns.twist.covariance[28] = 0.0;
+  odomIns.twist.covariance[35] = 0.0;
+
+  return odomIns;
 }

@@ -6,6 +6,8 @@
 #include <ixblue_stdbin_decoder/data_models/nav_header.h>
 #include <ixblue_stdbin_decoder/data_models/stdbin.h>
 
+#include <nav_msgs/Odometry.h>
+
 #include <ros/node_handle.h>
 #include <ros/publisher.h>
 #include <sensor_msgs/Imu.h>
@@ -44,6 +46,14 @@ public:
     static ixblue_ins_msgs::DVLPtr
     toDVLMsg(const ixblue_stdbin_decoder::Data::BinaryNav& navData);
 
+    nav_msgs::Odometry convertToOdomIns();
+
+    // INS get message
+    sensor_msgs::ImuPtr imuMsgGet;
+    ixblue_ins_msgs::DVLPtr DVLMsgGet;
+    ixblue_ins_msgs::InsPtr iXinsMsgGet;
+    ixblue_ins_msgs::SVSPtr SVSMsgGet;
+
 protected:
     // Header
     std_msgs::Header getHeader(const ixblue_stdbin_decoder::Data::NavHeader& headerData,
@@ -54,6 +64,7 @@ protected:
     std::string time_source;
     std::string time_origin;
     bool use_compensated_acceleration;
+    bool publish_odom_ins;
 
     ros::NodeHandle nh;
 
@@ -66,7 +77,11 @@ protected:
     ros::Publisher stdDVLPublisher;
     DiagnosticsPublisher diagPub;
 
+    // Odom Publisher
+    ros::Publisher stdInsOdomPublisher;
+
     // Utils
     bool useInsAsTimeReference = true;
     bool useUnixAsTimeOrigin = true;
+
 };

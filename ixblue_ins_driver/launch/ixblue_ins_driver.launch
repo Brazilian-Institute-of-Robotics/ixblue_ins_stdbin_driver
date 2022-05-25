@@ -21,5 +21,6 @@
 		<param name="max_latency" value="$(arg max_latency)"/>
 		<param name="connection_lost_timeout" value="$(arg connection_lost_timeout)"/>
 		<param name="use_compensated_acceleration" value="$(arg use_compensated_acceleration)"/>
+		<param name="publish_odom_ins" value="false"/>
 	</node>
 </launch>
